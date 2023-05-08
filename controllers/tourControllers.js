@@ -14,6 +14,16 @@ exports.checkId = (req, res, next, id) => {
   next();
 };
 
+exports.checkBody = (req, res, next) => {
+  if (!req.body.name || !req.body.price) {
+    return res.status(400).json({
+      status: 'fail',
+      message: 'Wrong data to create Tour'
+    });
+  }
+  next();
+};
+
 exports.getTours = (req, res) => {
   res.json({
     status: 'success',
@@ -28,7 +38,7 @@ exports.createTour = (req, res) => {
   const newId = toursSimple[toursSimple.length - 1].id + 1;
   const newTour = { id: newId, ...req.body };
   toursSimple.push(newTour);
-  fs.writeFile(`${__dirname}/dev-data/data/tours-simple.json`, JSON.stringify(toursSimple), err => {
+  fs.writeFile(`${__dirname}/../dev-data/data/tours-simple.json`, JSON.stringify(toursSimple), err => {
     if (err) res.status(404).send('File cannot be written');
     res.status(201).json({
       status: 'succes',
