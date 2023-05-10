@@ -26,6 +26,13 @@ const tourSchema = new mongoose.Schema({
 });
 const Tour = mongoose.model('Tour', tourSchema);
 
+const tourDat = new Tour({
+  name: 'Tour from Node',
+  price: 825
+});
+
+tourDat.save().then(res => console.log(res)).catch(err => console.log(`ERROR: ${err}`));
+
 const app = require('./app');
 
 app.listen(process.env.PORT, () => {
