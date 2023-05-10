@@ -9,30 +9,6 @@ mongoose.connect(process.env.DATABASE, {
   useNewUrlParser: true
 }).then(() => console.log('DB connection successful'));
 
-const tourSchema = new mongoose.Schema({
-  name: {
-    type: String,
-    unique: true,
-    required: [true, 'Tour must have a name']
-  },
-  price: {
-    type: Number,
-    required: [true, 'Tour must have a price']
-  },
-  rating: {
-    type: Number,
-    default: 4
-  }
-});
-const Tour = mongoose.model('Tour', tourSchema);
-
-const tourDat = new Tour({
-  name: 'Tour from Node',
-  price: 825
-});
-
-tourDat.save().then(res => console.log(res)).catch(err => console.log(`ERROR: ${err}`));
-
 const app = require('./app');
 
 app.listen(process.env.PORT, () => {
