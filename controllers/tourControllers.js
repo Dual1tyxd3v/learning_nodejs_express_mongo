@@ -6,6 +6,7 @@ exports.getTours = async (req, res) => {
     res.json({
       status: 'success',
       time: req.reqTime,
+      counts: tours.length,
       data: {
         tours
       }
@@ -71,6 +72,19 @@ exports.updateTour = async (req, res) => {
   }
 };
 
-exports.deleteTour = (req, res) => {
-  
+exports.deleteTour = async (req, res) => {
+  try {
+    await Tour.findByIdAndDelete(req.params.id, {
+      strict: false
+    });
+    res.status(204).json({
+      status: 'success',
+      result: null
+    });
+  } catch (err) {
+    res.status(400).json({
+      status: 'fail',
+      message: 'Something goes wrong'
+    });
+  }
 };
