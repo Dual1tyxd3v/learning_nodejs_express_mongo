@@ -51,8 +51,24 @@ exports.getTour = async (req, res) => {
   }
 };
 
-exports.updateTour = (req, res) => {
-  
+exports.updateTour = async (req, res) => {
+  try {
+    const tour = await Tour.findByIdAndUpdate(req.params.id, req.body, {
+      new: true,
+      runValidators: true
+    });
+    res.status(201).json({
+      status: 'success',
+      data: {
+        tour
+      }
+    });
+  } catch(err) {
+    res.status(400).json({
+      status: 'fail',
+      message: 'Tour not found or invalid data'
+    });
+  }
 };
 
 exports.deleteTour = (req, res) => {
