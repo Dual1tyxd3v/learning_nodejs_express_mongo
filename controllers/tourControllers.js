@@ -11,7 +11,17 @@ exports.getTours = async (req, res) => {
       .replace(/\b(gt|gte|lt|lte)\b/g, match => `$${match}`)
     );
 
-    const tours = await Tour.find(updQuery);
+    let query = Tour.find(updQuery);
+
+    if (req.query.sort) {
+      const sortBy = req.query.sort.split(',').join(' ');
+      query = query.sort(sortBy); 
+    } else {
+      query = query.sort('createdAt');
+    }
+
+    const tours = await query;
+    
     res.json({
       status: 'success',
       time: req.reqTime,
@@ -23,7 +33,8 @@ exports.getTours = async (req, res) => {
   } catch(err) {
     res.status(404).json({
       status: 'fail',
-      message: 'Something goes wrong'
+      message: 'Something goes wrong',
+      err: err.message
     });
   }
 };
