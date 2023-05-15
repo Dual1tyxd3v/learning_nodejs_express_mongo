@@ -22,7 +22,7 @@ exports.getTours = async (req, res) => {
         tours
       }
     });
-  } catch(err) {
+  } catch (err) {
     res.status(404).json({
       status: 'fail',
       message: 'Something goes wrong',
@@ -39,7 +39,7 @@ exports.createTour = async (req, res) => {
       status: 'success',
       data: newTour
     });
-  } catch(err) {
+  } catch (err) {
     res.status(404).json({
       status: 'fail',
       message: 'Invalid data!'
@@ -56,7 +56,7 @@ exports.getTour = async (req, res) => {
         tour
       }
     });
-  } catch(err) {
+  } catch (err) {
     res.status(404).json({
       status: 'fail',
       message: 'Tour not found'
@@ -76,7 +76,7 @@ exports.updateTour = async (req, res) => {
         tour
       }
     });
-  } catch(err) {
+  } catch (err) {
     res.status(400).json({
       status: 'fail',
       message: 'Tour not found or invalid data'
@@ -92,6 +92,38 @@ exports.deleteTour = async (req, res) => {
     res.status(204).json({
       status: 'success',
       result: null
+    });
+  } catch (err) {
+    res.status(400).json({
+      status: 'fail',
+      message: 'Something goes wrong'
+    });
+  }
+};
+
+exports.tourStats = async (req, res) => {
+  try {
+    const stats = await Tour.aggregate([
+      {
+        $match: { ratingsAverage: { $gt: 4.6 } }
+      },
+      {
+        $group: {
+          _id: '$difficulty',
+          numTours: { $sum: 1},
+          avgRating: { $avg: '$ratingsAverage' },
+          avgPrice: { $avg: '$price' },
+          maxPrice: { $max: '$price' },
+          minPrice: { $min: '$price' }
+        }
+      },
+      {
+        $sort: { avgPrice: 1 }
+      }
+    ]);
+    res.status(200).json({
+      status: 'success',
+      stats
     });
   } catch (err) {
     res.status(400).json({
