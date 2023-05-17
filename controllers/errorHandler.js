@@ -24,10 +24,15 @@ const sendErrorProd = (err, res) => {
   }
 };
 
-const castErrorHandler = (err) => {
+const castErrorHandler = err => {
   const message = `Invalid ${err.path}: ${err.value}`;
   return new AppError(message, 400);
 };
+
+const duplicateFieldHandler = err => {
+  const message = `Duplicate - ${err.message.split('{')[1].split('}')[0]}`;
+  return new AppError(message, 400);
+}
 
 module.exports = (err, req, res, next) => {
   err.statusCode = err.statusCode || 500;
@@ -37,9 +42,14 @@ module.exports = (err, req, res, next) => {
     sendErrorDev(err, res);
   } else if (process.env.NODE_ENV === 'production') {
     let error = {...err};
-    if (error.name = 'CastError') {
+
+    if (err.name === 'CastError') {
       error = castErrorHandler(error);
     }
+    if (err.code === 11000) {
+      error = duplicateFieldHandler(err);
+    }
+
     sendErrorProd(error, res);
   }
 };
