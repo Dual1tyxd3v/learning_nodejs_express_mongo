@@ -1,6 +1,8 @@
 const express = require('express');
 const tourRouter = require('./routes/tourRoutes');
 const userRouter = require('./routes/userRoutes');
+const AppError = require('./utils/appError');
+const errorHandler = require('./controllers/errorHandler');
 const morgan = require('morgan');
 
 const app = express();
@@ -20,21 +22,9 @@ app.use('/api/v1/tours', tourRouter);
 app.use('/api/v1/users', userRouter);
 
 app.all('*', (req, res, next) => {
-  const err = new Error(`Cant find ${req.originalUrl} on this server`);
-  err.statusCode = 404;
-  err.status = 'fail';
-  next(err);
+  next(new AppError(`Cant find ${req.originalUrl} on this server`, 404));
 });
 
-app.use((err, req, res, next) => {
-  err.statusCode = err.statusCode || 500;
-  err.status = err.status || 'error';
-
-  res.status(err.statusCode).json({
-    status: err.status,
-    message: err.message
-  });
-  next();
-});
+app.use(errorHandler);
 
 module.exports = app;
