@@ -1,3 +1,6 @@
+const asyncErrorHandler = require('./../utils/asyncErrorHandler');
+const User = require('./../model/userModel');
+
 exports.getUsers = (req, res) => {
   res.status(500).json({
     status: 'error',
@@ -32,3 +35,12 @@ exports.deleteUser = (req, res) => {
     message: 'resource is not ready yet'
   });
 };
+
+exports.signup = asyncErrorHandler(async (req, res, next) => {
+  const newUser = await User.create(req.body);
+
+  res.status(201).json({
+    status: 'success',
+    user: newUser
+  });
+});
