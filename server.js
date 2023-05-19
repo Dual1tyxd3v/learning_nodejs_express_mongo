@@ -11,6 +11,13 @@ mongoose.connect(process.env.DATABASE, {
 
 const app = require('./app');
 
-app.listen(process.env.PORT, () => {
+const server = app.listen(process.env.PORT, () => {
   console.log('Server ready');
+});
+
+process.on('unhandledRejection', (err) => {
+  console.log(`Unhandled error! ${err.name} - ${err.message}`);
+  server.close(() => {
+    process.exit(1);
+  });
 });
