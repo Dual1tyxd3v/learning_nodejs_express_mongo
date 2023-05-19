@@ -34,6 +34,11 @@ const duplicateFieldHandler = err => {
   return new AppError(message, 400);
 }
 
+const validationErrorHandler = err => {
+  const errors = Object.values(err.errors).map(error => error.message);
+  return new AppError(`Invalid input data. ${errors.join('. ')}`, 400);
+};
+
 module.exports = (err, req, res, next) => {
   err.statusCode = err.statusCode || 500;
   err.status = err.status || 'error';
@@ -49,7 +54,10 @@ module.exports = (err, req, res, next) => {
     if (err.code === 11000) {
       error = duplicateFieldHandler(err);
     }
-
+    if (err.name === 'ValidationError') {
+      error = validationErrorHandler(error);
+    }
++
     sendErrorProd(error, res);
   }
 };
