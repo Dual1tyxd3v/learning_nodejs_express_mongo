@@ -2,6 +2,11 @@ const dotenv = require('dotenv');
 const mongoose = require('mongoose');
 dotenv.config({ path: './config.env' });
 
+process.on('uncaughtException', (err) => {
+  console.log(`Uncaught Error! ${err.message}`);
+  process.exit(1);
+});
+
 mongoose.connect(process.env.DATABASE, {
   useCreateIndex: true,
   useFindAndModify: false,
