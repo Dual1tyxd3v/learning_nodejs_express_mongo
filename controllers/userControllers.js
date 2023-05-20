@@ -2,12 +2,18 @@ const asyncErrorHandler = require('./../utils/asyncErrorHandler');
 const User = require('./../model/userModel');
 const jwt = require('jsonwebtoken');
 
-exports.getUsers = (req, res) => {
-  res.status(500).json({
-    status: 'error',
-    message: 'resource is not ready yet'
+exports.getUsers = asyncErrorHandler(async (req, res) => {
+  const users = await User.find();
+
+  res.json({
+    status: 'success',
+    time: req.reqTime,
+    counts: users.length,
+    data: {
+      users
+    }
   });
-};
+});
 
 exports.createUser = (req, res) => {
   res.status(500).json({
@@ -38,7 +44,7 @@ exports.deleteUser = (req, res) => {
 };
 
 exports.signup = asyncErrorHandler(async (req, res, next) => {
-  const {name, email, password, passwordConfirm} = req.body;
+  const { name, email, password, passwordConfirm } = req.body;
   const newUser = await User.create({
     name, email, password, passwordConfirm
   });
