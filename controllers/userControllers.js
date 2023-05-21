@@ -2,6 +2,7 @@ const asyncErrorHandler = require('./../utils/asyncErrorHandler');
 const User = require('./../model/userModel');
 const jwt = require('jsonwebtoken');
 const AppError = require('./../utils/appError');
+const { promisify } = require('util');
 
 const getToken = id => {
   return jwt.sign({ id }, process.env.JWT_SECRET, {
@@ -51,9 +52,9 @@ exports.deleteUser = (req, res) => {
 };
 
 exports.signup = asyncErrorHandler(async (req, res, next) => {
-  const { name, email, password, passwordConfirm } = req.body;
+  const { name, email, password, passwordConfirm, passwordChangedAt } = req.body;
   const newUser = await User.create({
-    name, email, password, passwordConfirm
+    name, email, password, passwordConfirm, passwordChangedAt
   });
 
   const token = getToken(newUser._id);
@@ -94,6 +95,17 @@ exports.protect = asyncErrorHandler(async (req, res, next) => {
   if (!token) {
     return next(new AppError('You are not logged in!', 401));
   }
+  const decode = await promisify(jwt.verify)(token, process.env.JWT_SECRET);
+  const user = await User.findById(decode.id);
 
+  if (!user) {
+    return next(new AppError('User does not exist', 401));
+  }
+
+  if (user.passwordWasChanged(decode.iat)) {
+    return next(new AppError('Password was changed! Try login again', 401));
+  }
+
+  req.user = user;
   next();
 });

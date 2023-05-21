@@ -35,7 +35,8 @@ const userSchema = new mongoose.Schema({
       },
       message: 'Password confirm was failed'
     }
-  }
+  },
+  passwordChangedAt: Date
 });
 
 userSchema.pre('save', async function(next) {
@@ -48,6 +49,15 @@ userSchema.pre('save', async function(next) {
 
 userSchema.methods.checkPassword = async function(inputPass, dbPass) {
   return await bcrypt.compare(inputPass, dbPass);
+}
+
+userSchema.methods.passwordWasChanged = function(tokenTime) {
+  if (this.passwordChangedAt) {
+    const changedTime = parseInt(this.passwordChangedAt.getTime() / 1000, 10);
+    return changedTime > tokenTime;
+  }  
+
+  return false;
 }
 
 const User = mongoose.model('User', userSchema);
