@@ -52,9 +52,9 @@ exports.deleteUser = (req, res) => {
 };
 
 exports.signup = asyncErrorHandler(async (req, res, next) => {
-  const { name, email, password, passwordConfirm, passwordChangedAt } = req.body;
+  const { name, email, password, passwordConfirm, passwordChangedAt, role } = req.body;
   const newUser = await User.create({
-    name, email, password, passwordConfirm, passwordChangedAt
+    name, email, password, passwordConfirm, passwordChangedAt, role
   });
 
   const token = getToken(newUser._id);
@@ -109,3 +109,13 @@ exports.protect = asyncErrorHandler(async (req, res, next) => {
   req.user = user;
   next();
 });
+
+exports.restrictTo = (...roles) => {
+  return (req, res, next) => {
+    if (!roles.includes(req.user.role)) {
+      return next(new AppError('You have no permissions for this'), 403);
+    }
+
+    next();
+  }
+};
