@@ -78,8 +78,7 @@ userSchema.methods.createResetToken = function() {
 
   this.passwordResetToken = crypto.createHash('sha256').update(token).digest('hex');
   this.passwordTokenExpired = Date.now() + TEN_MINUTES_IN_MS;
-  console.log(this.passwordResetToken, 'encrypted');
-  console.log(token, 'token');
+
   return token;
 }
 

@@ -3,6 +3,7 @@ const User = require('./../model/userModel');
 const jwt = require('jsonwebtoken');
 const AppError = require('./../utils/appError');
 const { promisify } = require('util');
+const sendEmail = require('../utils/email');
 
 const getToken = id => {
   return jwt.sign({ id }, process.env.JWT_SECRET, {
@@ -128,4 +129,15 @@ exports.resetPassword = asyncErrorHandler(async (req, res, next) => {
   const token = user.createResetToken();
   await user.save({ validateBeforeSave: false });
 
+  const url = `${req.protocol}://${req.get('host')}/api/v1/resetPassword/${token}`;
+  const message = `If you forgot your password please submit this link - ${url}\nIf you didn't forgot password please ignore this message`;
+  await sendEmail({
+    email: user.email,
+    message
+  });
+
+  res.status(200).json({
+    status: 'success',
+    message: 'Email was send'
+  });
 });
