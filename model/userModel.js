@@ -1,6 +1,9 @@
+const crypto = require('crypto');
 const mongoose = require('mongoose');
 const validator = require('validator');
 const bcrypt = require('bcryptjs');
+
+const TEN_MINUTES_IN_MS = 10 * 60 * 1000;
 
 const userSchema = new mongoose.Schema({
   name: {
@@ -44,7 +47,9 @@ const userSchema = new mongoose.Schema({
       message: 'Password confirm was failed'
     }
   },
-  passwordChangedAt: Date
+  passwordChangedAt: Date,
+  passwordResetToken: String,
+  passwordTokenExpired: Date
 });
 
 userSchema.pre('save', async function(next) {
@@ -66,6 +71,16 @@ userSchema.methods.passwordWasChanged = function(tokenTime) {
   }  
 
   return false;
+}
+
+userSchema.methods.createResetToken = function() {
+  const token = crypto.randomBytes(32).toString('hex');
+
+  this.passwordResetToken = crypto.createHash('sha256').update(token).digest('hex');
+  this.passwordTokenExpired = Date.now() + TEN_MINUTES_IN_MS;
+  console.log(this.passwordResetToken, 'encrypted');
+  console.log(token, 'token');
+  return token;
 }
 
 const User = mongoose.model('User', userSchema);
