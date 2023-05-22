@@ -1,4 +1,5 @@
 const asyncErrorHandler = require('./../utils/asyncErrorHandler');
+const crypto = require('crypto');
 const User = require('./../model/userModel');
 const jwt = require('jsonwebtoken');
 const AppError = require('./../utils/appError');
@@ -121,7 +122,7 @@ exports.restrictTo = (...roles) => {
   }
 };
 
-exports.resetPassword = asyncErrorHandler(async (req, res, next) => {
+exports.forgotPassword = asyncErrorHandler(async (req, res, next) => {
   const user = await User.findOne({ email: req.body.email });
   if (!user) {
     return next(new AppError('There is no user with this email', 404));
@@ -131,13 +132,42 @@ exports.resetPassword = asyncErrorHandler(async (req, res, next) => {
 
   const url = `${req.protocol}://${req.get('host')}/api/v1/resetPassword/${token}`;
   const message = `If you forgot your password please submit this link - ${url}\nIf you didn't forgot password please ignore this message`;
-  await sendEmail({
-    email: user.email,
-    message
-  });
+  try {
+    await sendEmail({
+      email: user.email,
+      message
+    });
 
-  res.status(200).json({
+    res.status(200).json({
+      status: 'success',
+      message: 'Email was send'
+    });
+  } catch(err) {
+    user.passwordResetToken = undefined;
+    user.passwordTokenExpired = undefined;
+    await user.save({ validateBeforeSave: false });
+
+    return next(new AppError('Cant send email. Try again later'), 500);
+  }
+});
+
+exports.resetPassword = asyncErrorHandler(async (req, res, next) => {
+  const hashedToken = crypto.createHash('sha256').update(req.params.token).digest('hex');
+  const user = await User.findOne({ passwordResetToken: hashedToken, passwordTokenExpired: { $gt: Date.now() } });
+
+  if (!user) {
+    return next(new AppError('Invalid token or token has expired'), 400);
+  }
+
+  user.password = req.body.password;
+  user.passwordConfirm = req.body.passwordConfirm;
+  user.passwordResetToken = undefined;
+  user.passwordTokenExpired = undefined;
+  await user.save();
+
+  const token = getToken(user._id);
+  res.status(201).json({
     status: 'success',
-    message: 'Email was send'
+    token
   });
 });

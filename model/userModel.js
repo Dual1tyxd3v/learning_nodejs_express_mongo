@@ -60,6 +60,13 @@ userSchema.pre('save', async function(next) {
   next();
 });
 
+userSchema.pre('save', function(next) {
+  if (this.isNew || !this.isModified('password')) return next();
+
+  this.passwordChangedAt = Date.now() - 1000;
+  next();
+});
+
 userSchema.methods.checkPassword = async function(inputPass, dbPass) {
   return await bcrypt.compare(inputPass, dbPass);
 }
