@@ -12,6 +12,15 @@ const getToken = id => {
   });
 };
 
+const createAndSendToken = (user, statusCode, res) => {
+  const token = getToken(user._id);
+  res.status(statusCode).json({
+    status: 'success',
+    token,
+    user
+  });
+}
+
 exports.getUsers = asyncErrorHandler(async (req, res) => {
   const users = await User.find();
 
@@ -39,6 +48,28 @@ exports.getUser = (req, res) => {
   });
 };
 
+exports.updatePassword = asyncErrorHandler(async (req, res, next) => {
+  const {password, passwordConfirm, oldPassword} = req.body;
+  const user = await User.findById(req.user._id).select('+password');
+  if (!user) {
+    return next(new AppError('User not found', 400));
+  }
+
+  if (!password || !passwordConfirm || !oldPassword) {
+    return next(new AppError('Provide credentials', 400));
+  }
+
+  if (!(await user.checkPassword(oldPassword, user.password))) {
+    return next(new AppError('Incorrect password. Try again', 401));
+  }
+
+  user.password = password;
+  user.passwordConfirm = passwordConfirm;
+  await user.save();
+
+  createAndSendToken(user, 201, res);
+});
+
 exports.updateUser = (req, res) => {
   res.status(500).json({
     status: 'error',
@@ -59,13 +90,7 @@ exports.signup = asyncErrorHandler(async (req, res, next) => {
     name, email, password, passwordConfirm, passwordChangedAt, role
   });
 
-  const token = getToken(newUser._id);
-
-  res.status(201).json({
-    status: 'success',
-    token,
-    user: newUser
-  });
+  createAndSendToken(newUser, 201, res);
 });
 
 exports.login = asyncErrorHandler(async (req, res, next) => {
@@ -81,11 +106,7 @@ exports.login = asyncErrorHandler(async (req, res, next) => {
     return next(new AppError('Invalid email or password', 401));
   }
 
-  const token = getToken(user._id);
-  res.status(201).json({
-    status: 'success',
-    token
-  });
+  createAndSendToken(user, 201, res);
 });
 
 exports.protect = asyncErrorHandler(async (req, res, next) => {
@@ -165,9 +186,7 @@ exports.resetPassword = asyncErrorHandler(async (req, res, next) => {
   user.passwordTokenExpired = undefined;
   await user.save();
 
-  const token = getToken(user._id);
-  res.status(201).json({
-    status: 'success',
-    token
-  });
+  createAndSendToken(user, 201, res);
 });
+
+
